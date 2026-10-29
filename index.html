@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#f6f0e7"><meta name="description" content="An interactive 3D birthday and memory gallery."><meta name="screen-orientation" content="landscape"><title>UZal &amp; Sonam Choden — Our Memory World ✦</title>
+<style>
+  :root { --cream:#f6f0e7; --ink:#312b35; --pink:#f4b9c8; --rose:#c96883; --glass:rgba(255,250,246,.88); }
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#e9dfd3;font-family:ui-rounded,"SF Pro Rounded",system-ui,-apple-system,sans-serif;color:var(--ink)}
+  #game{position:fixed;inset:0}
+  canvas{display:block;width:100%;height:100%;outline:none}
+  .topbar{position:fixed;z-index:4;top:18px;left:50%;transform:translateX(-50%);width:min(92vw,600px);padding:13px 18px;border:1px solid #ffffffa8;border-radius:20px;background:var(--glass);box-shadow:0 10px 30px #51404b18;text-align:center;backdrop-filter:blur(12px)}
+  .topbar .eyebrow{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:#a66a7b;font-weight:800}
+  .topbar h1{font-size:clamp(18px,3vw,26px);margin:4px 0 2px;font-weight:800}
+  .topbar p{font-size:12px;margin:0;color:#756873}
+  .pill{position:fixed;z-index:4;top:18px;right:18px;border:0;border-radius:999px;background:#fff8;padding:10px 14px;color:#51404b;font-weight:700;box-shadow:0 5px 20px #51404b18;cursor:pointer}
+  .help{position:fixed;z-index:4;left:18px;top:18px;border:0;border-radius:999px;background:var(--glass);padding:10px 13px;font-weight:800;cursor:pointer;box-shadow:0 5px 20px #51404b18}
+  .controls{position:fixed;z-index:4;bottom:22px;left:22px;display:flex;align-items:flex-end;gap:14px}
+  .joystick{width:126px;height:126px;border-radius:50%;background:#fff7;border:2px solid #fff9;box-shadow:inset 0 0 0 1px #cbaab466;position:relative;touch-action:none;display:none}
+  .joyknob{width:48px;height:48px;border-radius:50%;background:linear-gradient(145deg,#f9d4de,#e99cb3);border:2px solid white;box-shadow:0 5px 15px #7a465344;position:absolute;left:37px;top:37px}
+  .buttons{display:flex;gap:8px;flex-wrap:wrap;max-width:350px}.lookPad{position:fixed;z-index:4;right:22px;bottom:24px;width:124px;height:124px;border-radius:50%;border:2px solid #ffffff99;background:#ffffff20;box-shadow:inset 0 0 0 1px #ffffff35;touch-action:none;display:none;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:900;letter-spacing:.14em;text-shadow:0 1px 4px #51404b;user-select:none}.lookKnob{position:absolute;left:36px;top:36px;width:48px;height:48px;border-radius:50%;background:linear-gradient(145deg,#ffffffcc,#e9c9d8cc);border:2px solid #fff;box-shadow:0 5px 15px #51404b44}.lookPad span{pointer-events:none}
+  .action{border:1px solid #ffffffbb;background:var(--glass);border-radius:15px;padding:12px 15px;font-size:13px;font-weight:800;color:#4d3947;box-shadow:0 5px 20px #51404b15;cursor:pointer;transition:transform .15s}
+  .action:active{transform:scale(.96)}
+  .action.primary{background:#c96783;color:white}
+  .hint{position:fixed;z-index:3;bottom:20px;left:50%;transform:translateX(-50%);font-size:11px;color:#64545d;background:#fff9;border:1px solid #fff;padding:8px 12px;border-radius:999px;text-align:center;white-space:nowrap}
+  .counter{position:fixed;z-index:4;right:18px;bottom:22px;padding:10px 13px;border-radius:14px;background:var(--glass);font-size:12px;font-weight:800}
+  .modal{position:fixed;z-index:10;inset:0;background:#2018238c;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(7px)}
+  .modal.show{display:flex}
+  .card{width:min(92vw,460px);background:#fffaf6;border-radius:26px;padding:22px;box-shadow:0 25px 80px #1d101f55;position:relative;animation:pop .22s ease-out}
+  @keyframes pop{from{transform:translateY(10px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+  .close{position:absolute;right:13px;top:13px;border:0;border-radius:50%;width:34px;height:34px;background:#f5e5e9;font-size:20px;cursor:pointer}
+  .photo{width:100%;height:220px;border-radius:18px;background:linear-gradient(135deg,#f7dbe2,#f6ead7 55%,#c9d8ce);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:16px;position:relative}
+  .photo img{width:100%;height:100%;object-fit:cover;display:none}
+  .photo .placeholder{font-size:60px;filter:drop-shadow(0 8px 12px #6a435522)}
+  .tag{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#b1647d;font-weight:900}
+  .card h2{margin:5px 0 8px;font-size:25px}
+  .card p{line-height:1.6;color:#6e5c67;margin:0 0 16px}
+  .date{font-size:12px;color:#a17f8c}
+  .modalActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .modalActions button{flex:1;min-width:130px}
+  .welcome{display:none}
+  .welcomeBox{width:min(92vw,510px);padding:30px;border:1px solid #fff;border-radius:28px;background:#fffaf1f2;box-shadow:0 25px 80px #6d4a5c25;text-align:center}
+  .welcomeBox .heart{font-size:40px}
+  .welcomeBox h2{font-size:30px;line-height:1.12;margin:9px 0}
+  .welcomeBox p{color:#776570;line-height:1.55;font-size:14px}
+  .welcomeBox input{width:100%;padding:13px 15px;border-radius:13px;border:1px solid #e7cbd4;background:#fff;font:inherit;margin:6px 0;outline-color:#c96783}
+  .welcomeBox .start{width:100%;padding:14px;border:0;border-radius:14px;background:#c96783;color:white;font:inherit;font-weight:900;margin-top:8px;cursor:pointer}
+  .small{font-size:11px!important;color:#9b8490!important}
+  .toast{position:fixed;z-index:6;left:50%;top:100px;transform:translateX(-50%);padding:10px 15px;border-radius:999px;background:#352b38dd;color:white;font-size:12px;opacity:0;pointer-events:none;transition:opacity .2s}
+  .toast.show{opacity:1}
+  #rotateMsg{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;text-align:center;padding:28px;background:#201823;color:#fffaf6;font-size:clamp(20px,4vw,30px);font-weight:800}
+  #rotateMsg span{display:block;font-size:14px;font-weight:500;margin-top:12px;color:#eadde5}
+  @media(orientation:portrait) and (max-width:900px){#rotateMsg{display:flex}}
+  @media(orientation:landscape) and (max-height:500px){.topbar{top:8px;padding:7px 12px}.topbar h1{font-size:15px}.topbar p{font-size:9px}.topbar .eyebrow{font-size:8px}.controls{bottom:8px}.joystick,.lookPad{width:88px;height:88px}.joyknob,.lookKnob{width:38px;height:38px;left:23px;top:23px}.action{padding:8px 10px}.counter{top:65px;bottom:auto}.hint{bottom:8px}}
+  @media (pointer:coarse){.joystick{display:block}.lookPad{display:flex}.hint{display:none}.controls{left:14px;bottom:14px}.buttons{max-width:130px}.action{padding:11px 12px}.topbar{top:12px}.counter{bottom:auto;top:105px;right:12px}}
+  @media(max-width:560px){.topbar{width:calc(100% - 125px);left:12px;transform:none;text-align:left;padding:10px 12px}.topbar h1{font-size:16px}.topbar p{font-size:10px}.pill{top:12px;right:12px}.buttons{max-width:115px}.action{font-size:11px;padding:10px}.joystick{width:108px;height:108px}.joyknob{left:29px;top:29px}.lookPad{width:108px;height:108px;right:12px;bottom:14px}.lookKnob{left:29px;top:29px}.controls{gap:8px}.counter{font-size:10px}.photo{height:180px}}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="rotateMsg">↻ Rotate your phone to landscape<span>This memory world is designed to play horizontally.</span></div>
+<div class="topbar"><div class="eyebrow">A little world made for you</div><h1 id="sceneTitle">UZal ♡ Sonam Choden</h1><p>Explore your memories • UZal ♡ Sonam Choden</p></div>
+
+<button class="pill" id="musicBtn">♫ Music: off</button>
+<div class="controls">
+  <div class="joystick" id="joystick" aria-label="Movement joystick"><div class="joyknob" id="joyknob"></div></div><div class="lookPad" id="lookPad" aria-label="Camera look joystick"><div class="lookKnob" id="lookKnob"></div><span>LOOK</span></div>
+  <div class="buttons">
+    <button class="action primary" id="danceBtn">✧ Dance</button>
+    <button class="action" id="wishBtn">🎂 Birthday wish</button>
+  </div>
+</div>
+<div class="hint">WASD / arrows: move · drag to look · click a framed photo to read its story · Space: dance</div>
+<div class="counter" id="counter">♡ 0 / 6 memories</div>
+<div class="toast" id="toast"></div>
+
+<div class="modal" id="memoryModal">
+  <div class="card">
+    <button class="close" id="closeModal" aria-label="Close">×</button>
+    <div class="photo"><img id="memoryImage" alt="Memory photo"><div class="placeholder" id="memoryEmoji">📷💗</div></div>
+    <div class="tag" id="memoryTag">A LITTLE MEMORY</div>
+    <h2 id="memoryTitle">Our favourite moment</h2>
+    <p id="memoryText"></p>
+    <div class="date" id="memoryDate"></div>
+    <div class="modalActions">
+      <button class="action" id="prevBtn">← Previous</button>
+      <button class="action primary" id="nextBtn">Next memory →</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js';
+
+const MEMORIES = [
+ {title:"The day we met",tag:"THE BEGINNING",date:"A moment to remember",emoji:"🌷",text:"Every beautiful story has a beginning. I’m so glad ours brought us here. Add your own story here to make this memory yours.",image:"photos/01-the-day-we-met.jpg"},
+ {title:"Your beautiful smile",tag:"MY FAVOURITE VIEW",date:"A smile I never forget",emoji:"😊",text:"If I could keep one thing from every day, it would be the moment you smile. You make ordinary days feel special.",image:"photos/02-your-beautiful-smile.jpg"},
+ {title:"Our little adventures",tag:"LITTLE ADVENTURES",date:"Together is the best place",emoji:"🌿",text:"It doesn’t matter where we go. The smallest adventures become big memories when we share them. Write about a favourite trip here.",image:"photos/03-little-adventures.jpg"},
+ {title:"A moment frozen in time",tag:"A PHOTO, A THOUSAND FEELINGS",date:"One of our favourite photos",emoji:"📸",text:"Some pictures hold more than a moment — they hold the feeling of being there. Add the story behind this photo.",image:"photos/04-favourite-moment.jpg"},
+ {title:"A wish for your birthday",tag:"YOUR SPECIAL DAY",date:"Today is all about you",emoji:"🎂",text:"May this new chapter bring you peace, laughter, courage, and all the little things that make your heart happy. You deserve so much good.",image:"photos/05-birthday-wish.jpg"},
+ {title:"Always another chapter",tag:"TO BE CONTINUED",date:"Our story keeps growing",emoji:"💌",text:"This isn’t the end of the gallery. There are more places to go, more memories to make, and more reasons to celebrate you. Happy birthday! ♡",image:"photos/06-another-chapter.jpg"}
+];
+const $ = id => document.getElementById(id);
+const STORAGE_KEY = "uzal-memory-gallery-v1";
+let memories = MEMORIES.map(m=>({...m}));
+try {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+  if (Array.isArray(saved) && saved.length === MEMORIES.length) memories = saved;
+} catch(e) {}
+let activeIndex=0, recipient="Sonam Choden", sender="UZal";
+let scene,camera,renderer,clock,player,playerBody,playerHead,playerArms=[],playerLegs=[],frames=[],raycaster,mouse,keys={},danceUntil=0,walkPhase=0,moveX=0,moveZ=0,musicOn=false,bgMusic,photoTextures=[];
+const LOW_END = /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) || Math.min(innerWidth,innerHeight)<500;
+const world = $("game");
+scene = new THREE.Scene(); scene.background = new THREE.Color("#e8ddd1"); scene.fog = new THREE.Fog("#e8ddd1",LOW_END?20:18,LOW_END?34:42);
+camera = new THREE.PerspectiveCamera(48,innerWidth/innerHeight,.1,100); camera.position.set(0,6.5,11);
+renderer = new THREE.WebGLRenderer({antialias:!LOW_END,alpha:false,powerPreference:"low-power"}); renderer.setPixelRatio(Math.min(devicePixelRatio,LOW_END?1:1.5)); renderer.setSize(innerWidth,innerHeight); renderer.shadowMap.enabled=!LOW_END; renderer.shadowMap.type=THREE.PCFSoftShadowMap; renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.15; world.appendChild(renderer.domElement);
+clock = new THREE.Clock(); raycaster=new THREE.Raycaster(); mouse=new THREE.Vector2();
+scene.add(new THREE.HemisphereLight("#fff7ef","#a18a9a",2.1));
+const keyLight=new THREE.DirectionalLight("#fff1dc",2.2); keyLight.position.set(-5,10,7); keyLight.castShadow=!LOW_END; keyLight.shadow.mapSize.set(LOW_END?256:512,LOW_END?256:512); scene.add(keyLight);
+const fillLight=new THREE.PointLight("#ffc3d2",35,22); fillLight.position.set(0,4,0); scene.add(fillLight);
+function mat(color,roughness=.8){return new THREE.MeshStandardMaterial({color,roughness})}
+const floorMat=mat("#f4ede3"), wallMat=mat("#e7ddd3"), trimMat=mat("#cdb8b5"), frameMat=mat("#6d535e"), goldMat=mat("#d8b879"), pinkMat=mat("#e9a8bd");
+function box(w,h,d,material,x,y,z,cast=false,receive=true){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);o.position.set(x,y,z);o.castShadow=cast;o.receiveShadow=receive;scene.add(o);return o}
+box(20,.25,18,floorMat,0,-.15,0,false,true);
+box(20,6,.25,wallMat,0,2.8,-8.8);
+box(.25,6,18,wallMat,-10,2.8,0);
+box(.25,6,18,wallMat,10,2.8,0);
+box(20,.18,.3,trimMat,0,.05,-8.62);box(.3,.18,18,trimMat,-9.82,.05,0); // base trim
+// Decorative wall panels and warm lamps
+for(let x=-8;x<=8;x+=4){box(.06,4.6,.08,trimMat,x,2.7,-8.63);const lamp=new THREE.PointLight("#ffe1c4",7,5);lamp.position.set(x,4.5,-7.7);scene.add(lamp);const orb=new THREE.Mesh(new THREE.SphereGeometry(.12,16,12),new THREE.MeshBasicMaterial({color:"#ffe6c4"}));orb.position.set(x,4.5,-8.35);scene.add(orb)}
+// side wall frames too
+function roundedFrame(w,h,depth,material,x,y,z,rotY=0){const g=new THREE.Group();g.position.set(x,y,z);g.rotation.y=rotY;const back=new THREE.Mesh(new THREE.BoxGeometry(w,h,depth),mat("#fffaf5"));back.position.z=-.03;g.add(back);const border=.11;for(const [bw,bh,bx,by] of [[w,border,0,h/2],[w,border,0,-h/2],[border,h, -w/2,0],[border,h,w/2,0]]){const m=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,depth*1.8),material);m.position.set(bx,by,.02);g.add(m)}scene.add(g);return g}
+function makePictureTexture(index){const c=document.createElement("canvas");c.width=512;c.height=640;const ctx=c.getContext("2d");const palettes=[["#f2d9dd","#d9e5dc"],["#f7e1bd","#d6c8e5"],["#c7d9d2","#f5e4d9"],["#f0c9c7","#e8dfb9"],["#f7d8e1","#f2e6c8"],["#d9d2ed","#f4d7d7"]];const p=palettes[index%palettes.length];const grd=ctx.createLinearGradient(0,0,512,640);grd.addColorStop(0,p[0]);grd.addColorStop(1,p[1]);ctx.fillStyle=grd;ctx.fillRect(0,0,512,640);ctx.fillStyle="#ffffff80";ctx.beginPath();ctx.arc(255,210,120,0,Math.PI*2);ctx.fill();ctx.fillStyle="#fffaf4";ctx.beginPath();ctx.ellipse(195,360,75,120,-.2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(320,365,78,130,.15,0,Math.PI*2);ctx.fill();ctx.fillStyle=["#c47c91","#a38fbd","#72988b","#d49c70","#c77e99","#9b83b1"][index%6];ctx.beginPath();ctx.arc(195,280,63,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(320,275,63,0,Math.PI*2);ctx.fill();ctx.fillStyle="#72535a";ctx.font="bold 30px system-ui";ctx.textAlign="center";ctx.fillText("A LITTLE MEMORY",256,570);ctx.font="22px system-ui";ctx.fillText("♡  "+(index+1)+"  ♡",256,605);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t}
+function createFrame(i,x,y,z,rotY=0){
+ const group=roundedFrame(1.7,2.15,.13,frameMat,x,y,z,rotY);
+ const tex=makePictureTexture(i);photoTextures.push(tex);
+ const img=new THREE.Mesh(new THREE.PlaneGeometry(1.43,1.82),new THREE.MeshBasicMaterial({map:tex}));
+ img.position.set(0,0,.105);group.add(img);
+ const glow=new THREE.PointLight("#f7b8cd",1.2,2.7);glow.position.set(0,0,.6);group.add(glow);
+ group.userData.memoryIndex=i;group.userData.picture=img;frames.push(group);
+ const plaque=new THREE.Mesh(new THREE.BoxGeometry(.85,.17,.05),mat("#fff8ef"));plaque.position.set(0,-1.22,.04);group.add(plaque);
+ if(memories[i].image) applyFrameImage(i,memories[i].image);
+ return group
+}
+function applyFrameImage(index, dataUrl){
+ const frame=frames[index]; if(!frame || !dataUrl) return;
+ const image=new Image();
+ image.onload=()=>{
+   const canvas=document.createElement("canvas");canvas.width=512;canvas.height=640;
+   const ctx=canvas.getContext("2d");const scale=Math.max(512/image.width,640/image.height);
+   const w=image.width*scale,h=image.height*scale;ctx.drawImage(image,(512-w)/2,(640-h)/2,w,h);
+   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+   const old=frame.userData.picture.material.map;frame.userData.picture.material.map=texture;frame.userData.picture.material.needsUpdate=true;
+   if(old && old!==texture) old.dispose();
+ };
+ image.onerror=()=>{ /* Missing files keep the illustrated placeholder visible. */ };
+ image.src=dataUrl;
+}
+function saveMemories(){
+ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(memories)); }
+ catch(e){ toast("Photo may be too large to save. Try a smaller image."); }
+}
+const positions=[[-7,2.5,-8.55],[-3.5,2.5,-8.55],[0,2.5,-8.55],[3.5,2.5,-8.55],[7,2.5,-8.55],[-9.75,2.5,-2.4]];
+positions.forEach((p,i)=>createFrame(i,p[0],p[1],p[2],i===5?Math.PI/2:0));
+// benches, plants and hearts
+function plant(x,z){const pot=new THREE.Mesh(new THREE.CylinderGeometry(.28,.38,.5,16),mat("#c98e91"));pot.position.set(x,.25,z);scene.add(pot);for(let i=0;i<5;i++){const leaf=new THREE.Mesh(new THREE.SphereGeometry(.18,12,10),mat(i%2?"#7e9b82":"#9eb69a"));leaf.scale.set(.6,1.7,.6);leaf.position.set(x+(Math.random()-.5)*.4,.75+Math.random()*.4,z+(Math.random()-.5)*.3);leaf.rotation.z=(Math.random()-.5)*.8;scene.add(leaf)}}
+plant(-8,-6.8);plant(8,-6.8);plant(-8,5.8);plant(8,5.8);
+function bench(x,z){box(2,.12,.55,mat("#b48a72"),x,.55,z,true);box(2,.5,.12,mat("#b48a72"),x,.85,z-.22,true);for(const dx of [-.75,.75])box(.12,.55,.12,mat("#7b5d5a"),x+dx,.25,z,true)}
+bench(0,1.4);bench(4,4.5);
+// Small floating heart ornaments
+function heartShape(){const s=new THREE.Shape();s.moveTo(0,-.25);s.bezierCurveTo(-.55,.1,-.45,.45,-.18,.42);s.bezierCurveTo(0,.4,0,.22,0,.22);s.bezierCurveTo(0,.22,.18,.48,.43,.4);s.bezierCurveTo(.7,.32,.52,-.02,0,-.25);return s}
+for(let i=0;i<12;i++){const h=new THREE.Mesh(new THREE.ShapeGeometry(heartShape()),new THREE.MeshBasicMaterial({color:i%2?"#f1b6c5":"#d6a9bb",transparent:true,opacity:.65,side:THREE.DoubleSide}));h.position.set((Math.random()-.5)*17,1.5+Math.random()*3,-6+Math.random()*10);h.scale.setScalar(.22+Math.random()*.18);scene.add(h);h.userData.float=Math.random()*6}
+// player character group, simple friendly stylized avatar
+player=new THREE.Group();player.position.set(0,0,4.8);scene.add(player);
+const skin=mat("#e5b998"), hair=mat("#51404a"), shirt=mat("#f1c3d0"), pants=mat("#9b829d"), shoes=mat("#594a58");
+function sphere(parent,r,material,x,y,z,sx=1,sy=1,sz=1){const m=new THREE.Mesh(new THREE.SphereGeometry(r,18,14),material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;parent.add(m);return m}
+playerBody=new THREE.Group();player.add(playerBody);
+const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.28,.5,5,10),shirt);torso.position.y=1.05;torso.castShadow=true;playerBody.add(torso);
+playerHead=sphere(playerBody,.25,skin,0,1.72,0,1,1.05,.95);sphere(playerBody,.26,hair,0,1.87,-.045,1.03,.65,1);
+sphere(playerBody,.08,skin,-.25,1.7,0);sphere(playerBody,.08,skin,.25,1.7,0);
+for(const x of [-.09,.09]){sphere(playerBody,.025,mat("#352b35"),x,1.73,.22,.7,1,.5)}
+sphere(playerBody,.045,mat("#c77b82"),0,1.62,.235,.8,.45,.5);
+for(const x of [-.38,.38]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.09,.42,4,8),shirt);arm.position.set(x,1.05,0);arm.rotation.z=x<0?-.18:.18;arm.castShadow=true;playerBody.add(arm);playerArms.push(arm)}
+for(const x of [-.16,.16]){const leg=new THREE.Mesh(new THREE.CapsuleGeometry(.105,.48,4,8),pants);leg.position.set(x,.42,0);leg.castShadow=true;playerBody.add(leg);playerLegs.push(leg);const shoe=new THREE.Mesh(new THREE.BoxGeometry(.22,.1,.32),shoes);shoe.position.set(x,.1,.08);shoe.castShadow=true;playerBody.add(shoe)}
+// a subtle circular shadow under player
+const shadow=new THREE.Mesh(new THREE.CircleGeometry(.48,32),new THREE.MeshBasicMaterial({color:"#8b6b7b",transparent:true,opacity:.16}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.012;player.add(shadow);
+function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,LOW_END?1:1.5))}addEventListener("resize",resize);
+async function requestLandscape(){try{if(screen.orientation&&screen.orientation.lock)await screen.orientation.lock("landscape")}catch(e){/* Some mobile browsers only allow landscape via device settings. */}}
+function toast(s){$("toast").textContent=s;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),2200)}
+function openMemory(i){activeIndex=(i+memories.length)%memories.length;const m=memories[activeIndex];$("memoryTag").textContent=m.tag||"A LITTLE MEMORY";$("memoryTitle").textContent=m.title;$("memoryText").textContent=m.text;$("memoryDate").textContent=m.date||"";$("memoryEmoji").textContent=m.emoji||"💗";const im=$("memoryImage");if(m.image){im.src=m.image;im.style.display="block";$("memoryEmoji").style.display="none"}else{im.style.display="none";$("memoryEmoji").style.display="block"}$("memoryModal").classList.add("show");}
+function closeMemory(){$("memoryModal").classList.remove("show")}
+$("closeModal").onclick=closeMemory;$("nextBtn").onclick=()=>openMemory(activeIndex+1);$("prevBtn").onclick=()=>openMemory(activeIndex-1);
+$("danceBtn").onclick=()=>{danceUntil=performance.now()+5500;toast("Dance time! ✨")};
+$("wishBtn").onclick=()=>openMemory(4);
+bgMusic = new Audio("music.mp3"); bgMusic.loop=true; bgMusic.preload="none"; bgMusic.volume=.55;
+$("musicBtn").onclick=async()=>{await requestLandscape();musicOn=!musicOn;$("musicBtn").textContent=musicOn?"♫ Music: on":"♫ Music: off";if(musicOn){try{await bgMusic.play()}catch(e){musicOn=false;$("musicBtn").textContent="♫ Music: off";toast("Add your licensed music as music.mp3 to the game folder")}}else{bgMusic.pause();bgMusic.currentTime=0}};
+document.addEventListener("pointerdown",requestLandscape,{once:true});
+// Drag to rotate the third-person camera; tap/click a frame to read its story.
+let dragPointer=null, dragStartX=0, dragStartY=0, lastX=0, lastY=0, dragged=false;
+let cameraYaw=0, cameraPitch=0.22, cameraDistance=7.8;
+function pickPhoto(clientX,clientY){
+ mouse.x=(clientX/innerWidth)*2-1;mouse.y=-(clientY/innerHeight)*2+1;raycaster.setFromCamera(mouse,camera);
+ const objs=[];frames.forEach(f=>f.traverse(o=>{if(o.isMesh)objs.push(o)}));
+ const hits=raycaster.intersectObjects(objs,false);
+ if(hits.length){let o=hits[0].object;while(o&&!Number.isInteger(o.userData.memoryIndex))o=o.parent;if(o)openMemory(o.userData.memoryIndex)}
+}
+renderer.domElement.addEventListener("pointerdown",e=>{if(e.target!==renderer.domElement)return;dragPointer=e.pointerId;dragStartX=lastX=e.clientX;dragStartY=lastY=e.clientY;dragged=false;renderer.domElement.setPointerCapture(e.pointerId)});
+renderer.domElement.addEventListener("pointermove",e=>{if(dragPointer!==e.pointerId)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;if(Math.hypot(e.clientX-dragStartX,e.clientY-dragStartY)>6)dragged=true;if(dragged){cameraYaw-=dx*.006;cameraPitch=THREE.MathUtils.clamp(cameraPitch+dy*.004,-.05,.72)}lastX=e.clientX;lastY=e.clientY});
+renderer.domElement.addEventListener("pointerup",e=>{if(dragPointer!==e.pointerId)return;if(!dragged)pickPhoto(e.clientX,e.clientY);dragPointer=null});
+renderer.domElement.addEventListener("pointercancel",()=>{dragPointer=null});
+addEventListener("keydown",e=>{keys[e.key.toLowerCase()]=true;if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key))e.preventDefault();if(e.code==="Space")danceUntil=performance.now()+5500;if(e.key==="Escape"){closeMemory()}});
+addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+// Left joystick moves; right joystick rotates the camera.
+const joy=$("joystick"),knob=$("joyknob");let joyPointer=null;
+function joyMove(e){const r=joy.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;const max=r.width*.31,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len}knob.style.transform=`translate(${dx}px,${dy}px)`;moveX=dx/max;moveZ=dy/max}
+joy.addEventListener("pointerdown",e=>{e.preventDefault();joyPointer=e.pointerId;joy.setPointerCapture(e.pointerId);joyMove(e)});
+joy.addEventListener("pointermove",e=>{if(e.pointerId===joyPointer)joyMove(e)});
+function joyEnd(){joyPointer=null;moveX=0;moveZ=0;knob.style.transform="translate(0,0)"}joy.addEventListener("pointerup",joyEnd);joy.addEventListener("pointercancel",joyEnd);
+const lookPad=$("lookPad"),lookKnob=$("lookKnob");let lookPointer=null,lookX=0,lookY=0;
+function lookMove(e){const r=lookPad.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy;const max=r.width*.31,len=Math.hypot(dx,dy);if(len>max){dx=dx/len*max;dy=dy/len}lookKnob.style.transform=`translate(${dx}px,${dy}px)`;lookX=dx/max;lookY=dy/max}
+lookPad.addEventListener("pointerdown",e=>{e.preventDefault();lookPointer=e.pointerId;lookPad.setPointerCapture(e.pointerId);lookMove(e)});
+lookPad.addEventListener("pointermove",e=>{if(e.pointerId===lookPointer)lookMove(e)});
+function lookEnd(){lookPointer=null;lookX=0;lookY=0;lookKnob.style.transform="translate(0,0)"}lookPad.addEventListener("pointerup",lookEnd);lookPad.addEventListener("pointercancel",lookEnd);
+function update(dt,t){
+ let sx=moveX,sz=moveZ;
+ if(keys.a||keys.arrowleft)sx-=1;if(keys.d||keys.arrowright)sx+=1;
+ if(keys.w||keys.arrowup)sz-=1;if(keys.s||keys.arrowdown)sz+=1;
+ const len=Math.hypot(sx,sz);if(len>1){sx/=len;sz/=len}
+ cameraYaw-=lookX*dt*2.0;cameraPitch=THREE.MathUtils.clamp(cameraPitch+lookY*dt*.9,-.05,.72);
+ const moving=Math.hypot(sx,sz)>.08,speed=3.3;
+ const fx=-Math.sin(cameraYaw),fz=-Math.cos(cameraYaw),rx=Math.cos(cameraYaw),rz=-Math.sin(cameraYaw);
+ const dx=(rx*sx+fx*(-sz))*speed*dt,dz=(rz*sx+fz*(-sz))*speed*dt;
+ player.position.x=THREE.MathUtils.clamp(player.position.x+dx,-8.9,8.9);
+ player.position.z=THREE.MathUtils.clamp(player.position.z+dz,-7.5,7.4);
+ if(moving){player.rotation.y=Math.atan2(dx,dz);walkPhase+=dt*10;playerLegs.forEach((l,i)=>l.rotation.x=Math.sin(walkPhase+i*Math.PI)*.55);playerArms.forEach((a,i)=>a.rotation.x=Math.sin(walkPhase+i*Math.PI)*.35)}
+ else{playerLegs.forEach(l=>l.rotation.x=THREE.MathUtils.damp(l.rotation.x,0,8,dt));playerArms.forEach(a=>a.rotation.x=THREE.MathUtils.damp(a.rotation.x,0,8,dt))}
+ const dancing=performance.now()<danceUntil;
+ if(dancing){player.rotation.y+=dt*1.5;player.position.y=.07+Math.abs(Math.sin(t*9))*.13;playerBody.rotation.z=Math.sin(t*8)*.15;playerArms.forEach((a,i)=>{a.rotation.z=(i===0?-1:1)*(.9+Math.sin(t*10)*.35);a.rotation.x=Math.sin(t*8+i)*.6});playerLegs.forEach((l,i)=>l.rotation.x=Math.sin(t*10+i*Math.PI)*.65)}
+ else{player.position.y=THREE.MathUtils.damp(player.position.y,0,8,dt);playerBody.rotation.z=THREE.MathUtils.damp(playerBody.rotation.z,0,8,dt)}
+ const target=new THREE.Vector3(player.position.x,1.65,player.position.z),horizontal=Math.cos(cameraPitch)*cameraDistance;
+ const desired=new THREE.Vector3(player.position.x+Math.sin(cameraYaw)*horizontal,player.position.y+2+Math.sin(cameraPitch)*cameraDistance,player.position.z+Math.cos(cameraYaw)*horizontal);
+ camera.position.lerp(desired,1-Math.exp(-7*dt));camera.lookAt(target);
+ frames.forEach((f,i)=>{f.scale.setScalar(1+Math.sin(t*2+i)*.008);const light=f.children.find(c=>c.isPointLight);if(light)light.intensity=1.2+Math.sin(t*2+i)*.35});
+ scene.children.forEach(o=>{if(o.userData.float!==undefined)o.position.y+=Math.sin(t+o.userData.float)*.0008});
+ $("counter").textContent=`♡ ${memories.filter(m=>m.text).length} / ${memories.length} memories`;
+}
+let lastRender=0;const targetFrameMs=LOW_END?1000/30:0;
+function animate(now=0){requestAnimationFrame(animate);if(targetFrameMs&&now-lastRender<targetFrameMs)return;lastRender=now;const dt=Math.min(clock.getDelta(),.04),t=clock.elapsedTime;update(dt,t);renderer.render(scene,camera)}animate();
+document.addEventListener("visibilitychange",()=>{if(document.hidden)bgMusic.pause();else if(musicOn)bgMusic.play().catch(()=>{})});
+</script>
+</body>
+</html>
