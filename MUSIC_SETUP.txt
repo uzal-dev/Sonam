@@ -1,0 +1,11 @@
+CUSTOM MUSIC SETUP
+
+The game is configured to play a local file named music.mp3 when the Music button is tapped.
+
+1. Obtain an MP3 you own or have permission to use. Do not extract copyrighted music from YouTube unless you have the rights/permission to do so.
+2. Copy that audio file into this folder, beside index.html, and name it exactly: music.mp3
+3. Reload the game and tap “Music: off”. The song will start after the tap.
+
+The supplied ZIP does not contain the YouTube song because it is copyrighted media. If you have an authorized audio file, add it as described above.
+
+Note: mobile browsers generally require a user tap before playing audio. Screen orientation locking is supported only by some browsers and contexts; if it is blocked, rotate the phone manually. A portrait overlay asks the player to rotate to landscape.
